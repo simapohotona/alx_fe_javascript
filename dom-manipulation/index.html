@@ -18,5 +18,22 @@
     <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
     <button onclick="addQuote()">Add Quote</button>
   </div>
+    <!-- Controls for import/export -->
+  <div>
+    <input id="importFile" type="file" accept=".json" />
+    <button id="exportBtn">Export Quotes (JSON)</button>
+    <button id="clearBtn">Clear All Quotes</button>
+  </div>
+
+  <!-- Optional: show last viewed quote stored in session -->
+  <div>
+    <strong>Last viewed quote:</strong>
+    <div id="lastViewed">None</div>
+  </div>
+
+  <!-- Where quotes will be displayed -->
+  <ul id="quotesList"></ul>
+
+  <script src="script.js"></script>
 </body>
 </html>
