@@ -67,6 +67,76 @@ function addQuote(newQuote) {
   displayQuotes(quotes);
 }
 
+// Helper to create unique IDs for each new quote
+function uid() {
+  return 'q_' + Math.random().toString(36).slice(2, 9);
+}
+ 
+// === Mock Server & Sync ===
+
+// create server copy if missing
+function initMockServer() {
+  const serverQuotes = JSON.parse(localStorage.getItem("serverQuotes"));
+  if (!serverQuotes) {
+    const localQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
+    localStorage.setItem("serverQuotes", JSON.stringify(localQuotes));
+  }
+}
+
+// simulate getting data from server
+function fetchFromServer() {
+  return JSON.parse(localStorage.getItem("serverQuotes")) || [];
+}
+
+// simulate pushing updates to server
+function pushToServer(quotes) {
+  localStorage.setItem("serverQuotes", JSON.stringify(quotes));
+}
+
+// sync and resolve conflicts
+function syncWithServer() {
+  const local = JSON.parse(localStorage.getItem("quotes")) || [];
+  const server = fetchFromServer();
+
+  const merged = [];
+  const allIds = new Set([...local.map(q => q.id), ...server.map(q => q.id)]);
+  const conflicts = [];
+
+  allIds.forEach(id => {
+    const localQuote = local.find(q => q.id === id);
+    const serverQuote = server.find(q => q.id === id);
+
+    if (localQuote && serverQuote) {
+      if (localQuote.updatedAt > serverQuote.updatedAt) {
+        merged.push(localQuote); // local is newer
+      } else if (serverQuote.updatedAt > localQuote.updatedAt) {
+        merged.push(serverQuote); // server is newer
+        conflicts.push(id);
+      } else {
+        merged.push(localQuote); // same timestamp
+      }
+    } else if (localQuote && !serverQuote) {
+      merged.push(localQuote); // local-only -> upload
+    } else if (!localQuote && serverQuote) {
+      merged.push(serverQuote); // server-only -> download
+    }
+  });
+
+  // save merged result to both sides
+  localStorage.setItem("quotes", JSON.stringify(merged));
+  pushToServer(merged);
+
+  // update UI
+  populateCategories();
+  filterQuotes();
+
+  // show conflict notice if needed
+  if (conflicts.length > 0) {
+    alert(`Resolved ${conflicts.length} conflict(s) using server data.`);
+  }
+}
+
+
 // script.js
 
 // 1. Application state
@@ -243,4 +313,11 @@ document.addEventListener('DOMContentLoaded', () => {
   loadQuotes();
   renderQuotes();
   updateLastViewed();
+  initMockServer();
+  populateCategories();
+  filterQuotes();
+
+  // run sync every 15 seconds for demo
+  setInterval(syncWithServer, 15000);
 });
+
