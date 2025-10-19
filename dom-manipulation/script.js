@@ -13,6 +13,60 @@ function showRandomQuote() {
   quoteDisplay.textContent = `"${quote.text}" — ${quote.category}`;
 }
 
+// === Category Filtering ===
+
+// Populate the dropdown dynamically with categories
+function populateCategories() {
+  const quotes = JSON.parse(localStorage.getItem("quotes")) || [];
+  const categorySelect = document.getElementById("categoryFilter");
+
+  // Extract unique categories
+  const categories = [...new Set(quotes.map(q => q.category))];
+
+  // Remove old options (keep "All Categories" as first)
+  categorySelect.length = 1;
+
+  categories.forEach(cat => {
+    const option = document.createElement("option");
+    option.value = cat;
+    option.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+    categorySelect.appendChild(option);
+  });
+
+  // Restore last selected category
+  const lastCategory = localStorage.getItem("lastCategory");
+  if (lastCategory) {
+    categorySelect.value = lastCategory;
+    filterQuotes();
+  }
+}
+
+// Filter quotes when a category is selected
+function filterQuotes() {
+  const selectedCategory = document.getElementById("categoryFilter").value;
+  const quotes = JSON.parse(localStorage.getItem("quotes")) || [];
+
+  // Save selected category to localStorage
+  localStorage.setItem("lastCategory", selectedCategory);
+
+  const filtered =
+    selectedCategory === "all"
+      ? quotes
+      : quotes.filter(q => q.category === selectedCategory);
+
+  displayQuotes(filtered);
+}
+
+// Update localStorage whenever a new quote or category is added
+function addQuote(newQuote) {
+  const quotes = JSON.parse(localStorage.getItem("quotes")) || [];
+  quotes.push(newQuote);
+  localStorage.setItem("quotes", JSON.stringify(quotes));
+
+  populateCategories(); // refresh dropdown
+  displayQuotes(quotes);
+}
+
 // script.js
 
 // 1. Application state
